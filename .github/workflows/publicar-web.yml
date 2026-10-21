@@ -28,6 +28,20 @@ jobs:
         run: |
           echo "Define la variable REPO_V2 (usuario/menorca3d_v2) en Settings → Secrets and variables → Actions → Variables"
           exit 1
+      - name: Comprobar FORGE_CODIGO y FORMULARIO_URL
+        env:
+          C: ${{ secrets.FORGE_CODIGO }}
+          F: ${{ vars.FORMULARIO_URL }}
+        run: |
+          if [ -z "$C" ]; then
+            echo "::error::Falta el secret FORGE_CODIGO (Settings → Secrets and variables → Actions → pestaña Secrets). Sin él la web quedaría abierta a cualquiera."
+            exit 1
+          fi
+          case "$F" in
+            https://docs.google.com/forms/*) ;;
+            "") echo "::warning::Sin FORMULARIO_URL: la propuesta solo se descargará" ;;
+            *) echo "::error::FORMULARIO_URL debe ser el enlace rellenado previamente del formulario (https://docs.google.com/forms/...), no '$F'"; exit 1 ;;
+          esac
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:

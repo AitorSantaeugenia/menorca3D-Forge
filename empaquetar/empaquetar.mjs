@@ -43,6 +43,7 @@ function copiarThree(dst) {
 }
 const copy = (src, dst) => { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.cpSync(src, dst, { recursive: true }); };
 const formulario = arg('formulario') || process.env.FORGE_FORMULARIO;
+if (formulario && !/^https:\/\/docs\.google\.com\/forms\//.test(formulario)) fail(`El enlace del formulario no es de Google Forms: «${formulario}». Usa el enlace rellenado previamente (variable FORMULARIO_URL o --formulario).`);
 const SA = 'v0.7/public/data/menorca/es-castell/santa-anna';
 
 // ---------------------------------------------------------------------------------------------------------------------

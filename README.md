@@ -2,6 +2,11 @@
 
 Editor para retocar a mano, una a una, las casas de Menorca3D y devolverlas al modelo de la isla (`menorca3d_v2`).
 
+> [!IMPORTANT]
+> Forge va ligado a **Menorca3D**, el modelo 3D de la isla: repositorio **[AitorSantaeugenia/menorca3D](https://github.com/AitorSantaeugenia/menorca3D)** · [ver Menorca3D online](https://aitorsantaeugenia.github.io/menorca3D/cesium/)
+> - **Probar Forge online** (pide código de acceso): https://aitorsantaeugenia.github.io/menorca3D-Forge/app/
+> - **Descargar para Windows:** [MenorcaForge.zip](https://github.com/AitorSantaeugenia/menorca3D-Forge/releases/latest/download/MenorcaForge.zip) (todas las versiones en [Releases](https://github.com/AitorSantaeugenia/menorca3D-Forge/releases))
+
 Buscas una casa por **número de edificio** (el del mapa de edificios del visor) o por **referencia catastral**. Forge la genera con el mismo código de v0.7 que usa el visor, la muestra en 3D con su terreno, la ortofoto y las casas vecinas, y te deja modificarla. Al pulsar **«Enviar a Menorca3D»**, esa casa sustituye a la generada en los modelos del visor Cesium.
 
 ## Tres formas de usarlo
@@ -51,6 +56,8 @@ La misma app, publicada como página estática: no hay servidor, así que las ca
    - Variables: `REPO_V2` (por ejemplo `usuario/menorca3d_v2`) y `FORMULARIO_URL` (el enlace rellenado previamente). Son las mismas que usa el .exe.
    - Secrets: **`FORGE_CODIGO`**, el código que darás a los colaboradores.
 4. Se publica sola en cada push a `main`, o a mano: **Actions → «Publicar web» → Run workflow**. Queda en `https://<usuario>.github.io/<repositorio>/`.
+
+**Si entra sin pedir código:** la web se publicó sin el secret. Comprueba que `FORGE_CODIGO` está en la pestaña **Secrets** (no en Variables) y vuelve a lanzar «Publicar web». Desde ahora, si falta, «Publicar web» se para con un aviso en vez de publicar sin código.
 
 **Para cambiar el código:** cambia el secret `FORGE_CODIGO` y vuelve a lanzar «Publicar web». Quien ya había entrado tendrá que escribir el nuevo.
 
