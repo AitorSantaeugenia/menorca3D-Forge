@@ -1,0 +1,41 @@
+# Crea MenorcaForge.zip (MenorcaForge.exe + recursos) en un servidor Windows de GitHub.
+# Se lanza a mano (pestaña Actions → «Construir .exe» → Run workflow) o al crear una etiqueta v* (p. ej. v0.2).
+# Variables del repositorio (Settings → Secrets and variables → Actions → Variables):
+#   REPO_V2 = usuario/menorca3d_v2 (obligatoria) · FORMULARIO_URL = enlace del formulario de envío (opcional)
+name: Construir .exe
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  exe:
+    runs-on: windows-latest
+    steps:
+      - name: Comprobar REPO_V2
+        if: ${{ vars.REPO_V2 == '' }}
+        run: |
+          echo "Define la variable REPO_V2 (usuario/menorca3d_v2) en Settings → Secrets and variables → Actions → Variables"
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.REPO_V2 }}
+          path: menorca3d_v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: node empaquetar/empaquetar.mjs --v2 menorca3d_v2
+        env:
+          FORGE_FORMULARIO: ${{ vars.FORMULARIO_URL }}   # enlace rellenado previamente del formulario de Google (opcional)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MenorcaForge
+          path: dist/MenorcaForge.zip
+      - name: Adjuntar a la versión (solo con etiqueta v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/MenorcaForge.zip

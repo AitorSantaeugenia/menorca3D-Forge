@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menorca3D Forge</title>
+<link rel="stylesheet" href="/app/style.css">
+<script type="importmap">{ "imports": { "three": "/three/build/three.module.js", "three/addons/": "/three/examples/jsm/" } }</script>
+</head>
+<body>
+<header id="top">
+  <button id="btnCasas" class="logo" title="Volver a la lista de casas">MENORCA<span>3D</span> <b>FORGE</b></button>
+  <form id="fBuscar" class="buscar"><input id="q" placeholder="Nº de edificio o referencia catastral" autocomplete="off" spellcheck="false"><button>Abrir</button></form>
+  <div id="casaInfo" class="casa-info"></div>
+  <div class="sp"></div>
+  <button id="btnUndo" class="ic" title="Deshacer (Ctrl+Z)">↶</button>
+  <button id="btnRedo" class="ic" title="Rehacer (Ctrl+Y)">↷</button>
+  <button id="btnGuardar" title="Guardar en casas/ (Ctrl+S)">Guardar</button>
+  <button id="btnEnviar" class="prim" title="Guardar y regenerar los modelos de menorca3d_v2 con esta casa">Enviar a Menorca3D</button>
+  <div class="menu"><button id="btnMas" class="ic" title="Más opciones">⋯</button>
+    <div id="menuMas" class="pop">
+      <button data-a="propuesta">Exportar propuesta para enviar…</button>
+      <button data-a="importarProp">Importar propuesta (.forge.json)…</button>
+      <hr>
+      <button data-a="exportar">Exportar GLB (Blender…)</button>
+      <button data-a="importar">Importar GLB como piezas…</button>
+      <hr>
+      <button data-a="regenerar">Regenerar desde v0.7 (sin guardar)</button>
+      <button data-a="descartar">Descartar la versión editada…</button>
+      <hr>
+      <button data-a="ayuda">Atajos de teclado</button>
+    </div>
+  </div>
+  <input id="fileGLB" type="file" accept=".glb,.gltf" hidden>
+  <input id="fileProp" type="file" accept=".json" hidden>
+</header>
+
+<main id="main">
+  <aside id="izq">
+    <section>
+      <h3>Piezas <small id="nPiezas"></small></h3>
+      <input id="filtro" class="filtro" type="search" placeholder="Buscar pieza o material…" autocomplete="off">
+      <div id="lista" class="lista"></div>
+    </section>
+    <section class="add">
+      <h3>Añadir <small>se coloca donde hiciste clic</small></h3>
+      <div id="catalogo"></div>
+    </section>
+  </aside>
+
+  <div id="vp">
+    <canvas id="c"></canvas>
+    <div class="tools">
+      <div class="seg" id="segModo">
+        <button data-m="translate" title="Mover (W)">✥ Mover</button><button data-m="rotate" title="Girar (R)">⟳ Girar</button><button data-m="scale" title="Escalar (S)">⤡ Escalar</button>
+      </div>
+      <div class="seg"><button id="btnEspacio" title="Ejes del mundo o de la pieza">Global</button><button id="btnAjuste" title="Ajustar a 10 cm / 15° / 5 %">Ajuste</button></div>
+      <div class="seg"><button id="btnVert" title="Editar vértices (V o doble clic)">◇ Vértices</button></div>
+    </div>
+    <div class="vistas">
+      <div id="brujula" title="Norte"><span>N</span></div>
+      <div class="seg v"><button data-v="norte" title="Mirar desde el norte">N</button><button data-v="sur" title="Desde el sur">S</button><button data-v="este" title="Desde el este">E</button><button data-v="oeste" title="Desde el oeste">O</button><button data-v="planta" title="Planta">⌖</button><button data-v="encuadrar" title="Encuadrar (F)">⛶</button></div>
+    </div>
+    <div class="ctx">
+      <label><input type="checkbox" id="chkOrto" checked> Ortofoto</label>
+      <label><input type="checkbox" id="chkVecinos" checked> Vecinos</label>
+      <label><input type="checkbox" id="chkNoche"> Noche</label>
+    </div>
+    <div class="teclas" title="Cámara con el teclado">↑↓←→ moverse · Q E girar · Re/Av Pág subir/bajar · + − zoom · Mayús rápido</div>
+    <div id="estado" class="estado"></div>
+    <div id="revision" class="revision"></div>
+  </div>
+
+  <aside id="der"><div id="props"></div></aside>
+</main>
+
+<!-- Pantalla de inicio: elegir la casa -->
+<div id="inicio">
+  <div class="ini-panel">
+    <div class="ini-izq">
+      <div class="logo big">MENORCA<span>3D</span> <b>FORGE</b></div>
+      <p class="sub">Retoca a mano cualquier casa de Es Castell y devuélvela al modelo de la isla.</p>
+      <form id="fBuscar2" class="buscar big"><input id="q2" placeholder="Nº de edificio (p. ej. 1061) o referencia catastral" autocomplete="off" spellcheck="false"><button>Abrir</button></form>
+      <h3>Casas editadas</h3>
+      <div id="editadas" class="editadas"><em>Cargando…</em></div>
+      <p class="nota" id="iniNota"></p>
+      <p class="nota aviso">Reconstrucción aproximada con fines divulgativos; no tiene validez oficial. Datos: Catastro, IGN, IDE Menorca y OpenStreetMap (ver ATRIBUCIONES.md).</p>
+    </div>
+    <div class="ini-der">
+      <canvas id="mapa"></canvas>
+      <div class="mapa-ley"><span class="dot g"></span> generada por v0.7 <span class="dot e"></span> editada en Forge · rueda: zoom · arrastrar: mover · clic: abrir</div>
+      <div id="mapaTip" class="tip"></div>
+    </div>
+  </div>
+</div>
+
+<div id="carga"><div class="logo big">MENORCA<span>3D</span> <b>FORGE</b></div><div class="sp-anim"></div><div id="cargaMsg">Cargando la isla…</div></div>
+<div id="modal" class="modal"><div class="caja"><h3 id="mTit"></h3><div id="mCuerpo"></div><div class="pie"><button id="mCerrar">Cerrar</button></div></div></div>
+<div id="toast"></div>
+
+<script type="module" src="/app/main.js"></script>
+</body>
+</html>

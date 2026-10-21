@@ -1,0 +1,4 @@
+{
+  "nota": "Copia este archivo como forge.config.json y pon en «formulario» el enlace rellenado previamente de tu formulario de Google (ver README, «Formulario de envío»). Los valores AUTOR, NUMERO, REF, COMENTARIO y ARCHIVO los sustituye Forge.",
+  "formulario": "https://docs.google.com/forms/d/e/XXXXXXXX/viewform?usp=pp_url&entry.1111111111=AUTOR&entry.2222222222=NUMERO&entry.3333333333=REF&entry.4444444444=COMENTARIO&entry.5555555555=ARCHIVO"
+}

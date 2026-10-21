@@ -1,0 +1,19 @@
+# ---- Menorca3D Forge: qué NO se sube a GitHub ----
+node_modules/
+dist/
+# Casas editadas: van al repositorio de menorca3d_v2 (menorca3d_v2/casas), no aquí
+casas/
+mis_casas/
+# Copia local del exportador de v2 antes de modificarlo
+integracion/
+*.exe
+*.blob
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Enlace del formulario de envío (no se publica: ver forge.config.ejemplo.json)
+forge.config.json
+
+# Carpeta temporal con workflows para mover a .github/workflows (no se sube)
+flujos_github/

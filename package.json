@@ -1,0 +1,9 @@
+{
+  "name": "menorca3d-forge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Editor de casas de Menorca3D por referencia catastral: retoca la geometría de v0.7 y devuélvela a menorca3d_v2",
+  "type": "module",
+  "scripts": { "start": "node servidor.mjs" },
+  "dependencies": { "three": "0.169.0" }
+}
