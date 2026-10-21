@@ -172,3 +172,7 @@ aside { background: var(--panel); overflow-y: auto; }
 .modal textarea { font: inherit; color: var(--txt); background: #12161b; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; resize: vertical; }
 .nota.aviso { margin-top: 4px; opacity: .8; }
 .modal ol.pasos { margin: 10px 0 0 18px; padding: 0; line-height: 1.6; }
+/* Código de acceso (versión web) */
+.acceso { text-align: center; }
+.acceso input { padding: 8px 10px; min-width: 220px; }
+.acceso .bad { min-height: 1.2em; }

@@ -3,9 +3,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { setMaxAnisotropy } from '/v07/core/textures.js';
-import { dayNight } from '/v07/core/dayNight.js';
-import { createBuildings } from '/v07/buildings/buildings.js';
+import { setMaxAnisotropy } from '../v07/core/textures.js';
+import { dayNight } from '../v07/core/dayNight.js';
+import { createBuildings } from '../v07/buildings/buildings.js';
 import { serializar, deserializar, actualizarDerivados, crearPieza, material } from './casa.js';
 
 const DAY = { sky: new THREE.Color(0xbfe3f2), hemi: [new THREE.Color(0xffffff), new THREE.Color(0x8a9a78), 2.4], sun: [new THREE.Color(0xfff2d8), 2.2] };

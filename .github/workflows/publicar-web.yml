@@ -1,0 +1,48 @@
+# Publica la versión web de Menorca3D Forge en GitHub Pages (https://<usuario>.github.io/<repositorio>/).
+# Se lanza sola en cada push a main y también a mano (pestaña Actions → «Publicar web» → Run workflow).
+# Configuración del repositorio (Settings → Secrets and variables → Actions):
+#   Variables: REPO_V2 = usuario/menorca3d_v2 (obligatoria) · FORMULARIO_URL = enlace del formulario de envío (opcional)
+#   Secrets:   FORGE_CODIGO = código de acceso que darás a los colaboradores (opcional; sin él, entra cualquiera)
+# Y en Settings → Pages → Source: «GitHub Actions».
+name: Publicar web
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}app/
+    steps:
+      - name: Comprobar REPO_V2
+        if: ${{ vars.REPO_V2 == '' }}
+        run: |
+          echo "Define la variable REPO_V2 (usuario/menorca3d_v2) en Settings → Secrets and variables → Actions → Variables"
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.REPO_V2 }}
+          path: menorca3d_v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: node empaquetar/empaquetar.mjs --web --v2 menorca3d_v2 --salida dist/web
+        env:
+          FORGE_FORMULARIO: ${{ vars.FORMULARIO_URL }}
+          FORGE_CODIGO: ${{ secrets.FORGE_CODIGO }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/web
+      - id: deploy
+        uses: actions/deploy-pages@v4

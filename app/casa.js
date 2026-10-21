@@ -1,9 +1,9 @@
 // Casa editable: piezas (THREE.Mesh) con los mismos atributos que usa menorca3d_v2 (posición, normal, UV en metros,
 // color por vértice y datos de fachada aWall/aFac), materiales de v0.7 y el formato de archivo .forge.json.
 import * as THREE from 'three';
-import { createBuildings } from '/v07/buildings/buildings.js';
-import { createFacadeMaterial } from '/v07/buildings/facadeMaterial.js';
-import { TEXTURES, tex, texturedMaterial } from '/v07/core/textures.js';
+import { createBuildings } from '../v07/buildings/buildings.js';
+import { createFacadeMaterial } from '../v07/buildings/facadeMaterial.js';
+import { TEXTURES, tex, texturedMaterial } from '../v07/core/textures.js';
 
 export const FORMATO = 'menorca3d-forge', VERSION = 1;
 export const TEXTURAS = Object.keys(TEXTURES);

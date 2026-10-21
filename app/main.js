@@ -6,7 +6,12 @@ import { cargarDatos } from './datos.js';
 import { crearEditor } from './editor.js';
 import { generarCasa, piezasDeGrupo, separar, serializar, deserializar, crearPieza, pintar, colorDe, actualizarDerivados, ESTILOS, TEXTURAS, FORMATO } from './casa.js';
 import { PRIMITIVAS, partesDe } from './primitivas.js';
-import { tex } from '/v07/core/textures.js';
+import { tex } from '../v07/core/textures.js';
+import * as api from './api.js';
+
+// v0.7 pide las texturas a /assets/…: se resuelven junto a la app para que también funcione publicada en una subcarpeta (GitHub Pages)
+const RAIZ = new URL('../', import.meta.url).href;
+THREE.DefaultLoadingManager.setURLModifier(u => (u.startsWith('/assets/') ? RAIZ + u.slice(1) : u));
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -23,6 +28,13 @@ let D = null, ed = null, casa = null, guardadas = new Map(), ultimoPunto = null,
 // Arranque
 // =====================================================================================================================
 (async function init() {
+  const st = await api.estado();
+  modo = st.modo || 'completo';
+  if (modo == 'web') {
+    const cfg = await api.config();
+    if (cfg.accesoHash) await pedirCodigo(cfg.accesoHash);
+    $('cargaMsg').textContent = 'Cargando la isla…';
+  }
   try {
     D = await cargarDatos();
   } catch (err) { $('cargaMsg').innerHTML = `<span class="bad">${esc(err.message)}</span>`; return; }
@@ -33,19 +45,36 @@ let D = null, ed = null, casa = null, guardadas = new Map(), ultimoPunto = null,
   await refrescarGuardadas();
   $('carga').classList.add('oculto');
   initMapa();
-  const st = await fetch('/api/estado').then(r => r.json()).catch(() => null);
-  if (st) {
-    modo = st.modo || 'completo';
-    $('iniNota').innerHTML = `${D.parcelas.size.toLocaleString('es')} parcelas del Catastro en Es Castell`
-      + (modo == 'completo' ? ` · datos de <code>${esc(st.v2)}</code>` : ' · <b>modo colaborador</b>: tus cambios se envían como propuesta')
-      + `<br>Las casas editadas se guardan en <code>${esc(st.casas)}</code>`;
-    if (modo == 'colaborador') { $('btnEnviar').textContent = 'Enviar propuesta'; $('btnEnviar').title = 'Guarda la casa y prepara el archivo para enviarlo'; }
+  $('iniNota').innerHTML = `${D.parcelas.size.toLocaleString('es')} parcelas del Catastro en Es Castell`
+    + (modo == 'completo' ? ` · datos de <code>${esc(st.v2)}</code>` : modo == 'web' ? ' · <b>versión web</b>: tus cambios se envían como propuesta' : ' · <b>modo colaborador</b>: tus cambios se envían como propuesta')
+    + (modo == 'web' ? '<br>Las casas editadas se guardan <b>en este navegador</b> (si borras los datos del navegador, se pierden: envíalas como propuesta)'
+      : `<br>Las casas editadas se guardan en <code>${esc(st.casas)}</code>`);
+  if (modo != 'completo') {
+    $('btnEnviar').textContent = 'Enviar propuesta'; $('btnEnviar').title = 'Guarda la casa y prepara el archivo para enviarlo';
+    $('btnGuardar').title = modo == 'web' ? 'Guardar en este navegador (Ctrl+S)' : $('btnGuardar').title;
   }
   const h = decodeURIComponent(location.hash.slice(1)); if (h) abrir(h); else mostrarInicio(true);
 })();
 
+// Versión web: un código de acceso sencillo (config.json solo guarda su SHA-256). Se recuerda en este navegador.
+const LS_ACCESO = 'forge-acceso';
+function pedirCodigo(hash) {
+  try { if (localStorage.getItem(LS_ACCESO) == hash) return Promise.resolve(); } catch { /* */ }
+  return new Promise(ok => {
+    $('cargaMsg').innerHTML = `<form id="fAcceso" class="acceso"><p>Esta versión de Forge es solo para colaboradores.<br>Escribe el código de acceso que te han dado.</p>
+      <input id="aCod" type="password" autocomplete="off" placeholder="Código de acceso"> <button class="prim">Entrar</button><p id="aMal" class="bad"></p></form>`;
+    $('aCod').focus();
+    $('fAcceso').onsubmit = async e => {
+      e.preventDefault();
+      if ((await api.sha256($('aCod').value.trim())) != hash) { $('aMal').textContent = 'Código incorrecto.'; $('aCod').select(); return; }
+      try { localStorage.setItem(LS_ACCESO, hash); } catch { /* */ }
+      ok();
+    };
+  });
+}
+
 async function refrescarGuardadas() {
-  const L = await fetch('/api/casas').then(r => r.json()).catch(() => []);
+  const L = await api.listaCasas().catch(() => []);
   guardadas = new Map(L.filter(c => c.ref).map(c => [c.ref, c]));
   const el = $('editadas');
   el.innerHTML = L.length ? L.map(c => `<div class="ed" data-ref="${esc(c.ref)}"><div><b>${c.n ? 'Nº ' + c.n : esc(c.ref)}</b> <span class="r">${esc(c.ref)}</span><br><small>${c.objetos ?? '?'} piezas · ${c.zona == 'municipio' ? 'resto del municipio' : 'zona detallada'}</small></div><small class="r">${c.actualizado ? new Date(c.actualizado).toLocaleString('es') : esc(c.error || '')}</small></div>`).join('')
@@ -68,7 +97,8 @@ async function abrir(q) {
   try {
     let piezas, editada = false;
     if (guardadas.has(p.ref)) {
-      const F = await fetch('/api/casas/' + p.ref).then(r => r.json());
+      const F = await api.leerCasa(p.ref);
+      if (!F) throw new Error('No encuentro la versión guardada');
       if (F.formato != FORMATO) throw new Error('El archivo guardado no tiene el formato de Forge');
       piezas = deserializar(F); editada = true; casa = { p, Z, notas: F.notas || '' };
     } else { piezas = generarCasa(Z, p.ref, D.ajustes); casa = { p, Z, notas: '' }; }
@@ -87,14 +117,15 @@ const meta = () => ({ ref: casa.p.ref, n: casa.p.n, zona: casa.p.zona, origin: D
 async function guardar() {
   if (!casa) return false;
   const F = serializar(ed.piezas(), meta());
-  const r = await fetch('/api/casas/' + casa.p.ref, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(F) }).then(r => r.json()).catch(e => ({ error: e.message }));
+  F.actualizado = F.actualizado || new Date().toISOString();
+  const r = await api.guardarCasa(casa.p.ref, F);
   if (r.error) { toast('No se pudo guardar: ' + esc(r.error), 6000); return false; }
   ed.marcarGuardado(); casa.editada = true; await refrescarGuardadas(); pintarCabecera();
-  toast(`Guardado <b>${casa.p.ref}.forge.json</b>`); return true;
+  toast(modo == 'web' ? `Guardado en este navegador (<b>${casa.p.ref}</b>)` : `Guardado <b>${casa.p.ref}.forge.json</b>`); return true;
 }
 async function enviar() {
   if (!casa) return;
-  if (modo == 'colaborador') return exportarPropuesta();
+  if (modo != 'completo') return exportarPropuesta();
   if (ed.sucio || !casa.editada) { if (!(await guardar())) return; }
   const zona = casa.p.zona;
   const r = await fetch('/api/publicar', { method: 'POST', body: JSON.stringify({ zona }) }).then(r => r.json());
@@ -135,7 +166,7 @@ async function exportarPropuesta() {
     const F = serializar(ed.piezas(), meta()); F.propuesta = { autor, comentario, fecha: new Date().toISOString(), herramienta: 'Menorca3D Forge' };
     const nombre = `propuesta_n${casa.p.n}_${casa.p.ref}_${fechaArchivo()}.forge.json`;
     descargar(nombre, JSON.stringify(F));
-    const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
+    const cfg = await api.config();
     const url = enlaceFormulario(cfg.formulario, { AUTOR: autor, NUMERO: String(casa.p.n), REF: casa.p.ref, COMENTARIO: comentario, ARCHIVO: nombre });
     $('pFin').innerHTML = `<span class="ok">✔ Guardado y descargado <b>${esc(nombre)}</b></span> (carpeta Descargas).`
       + (url ? `<ol class="pasos"><li>Abre el formulario (ya lleva tu nombre, el edificio y el comentario).</li><li>En «Archivo de la propuesta», pulsa «Añadir archivo» y elige <b>${esc(nombre)}</b> de Descargas.</li><li>Pulsa «Enviar».</li></ol>
@@ -210,7 +241,7 @@ function categoria(o) {
   if (k == 'teja' || k == 'terraza' || /^(Faldón|Cubierta|Azotea)/.test(n)) return 'cubiertas';
   return 'detalles';
 }
-const texURL = k => `/assets/textures/${k}_albedo.png`;
+const texURL = k => `${RAIZ}assets/textures/${k}_albedo.png`;
 function muestra(o) {   // cuadradito de la lista: textura real o color de la pieza
   const k = o.userData.pieza.material.kind;
   return k != 'color' && k != 'fachada' ? `background:url(${texURL(k)}) center/300%` : `background:${colorDe(o)}`;
@@ -322,7 +353,7 @@ function pintarProps() {
       <div class="bloque ayuda">${ed.piezas().length} piezas · ${Math.round(tris).toLocaleString('es')} triángulos<br><br>
       <b>Cómo se trabaja</b><br>Clic en una pieza para elegirla (<kbd>Mayús</kbd> para varias). Mueve, gira o escala con el gizmo (<kbd>W</kbd> <kbd>R</kbd> <kbd>S</kbd>). La cámara se mueve con las flechas, <kbd>Q</kbd>/<kbd>E</kbd> para girar y <kbd>+</kbd>/<kbd>−</kbd> para el zoom.
       Doble clic o <kbd>V</kbd>: mover vértices sueltos (subir un alero, estirar una pared). Las paredes con «Fachada de v0.7» redibujan solas ventanas y persianas al cambiar de tamaño.<br><br>
-      Para añadir algo, haz clic en la superficie donde va y pulsa un botón de «Añadir». <kbd>Ctrl</kbd>+<kbd>S</kbd> guarda; «Enviar a Menorca3D» lo mete en el modelo de la isla.</div>`;
+      Para añadir algo, haz clic en la superficie donde va y pulsa un botón de «Añadir». <kbd>Ctrl</kbd>+<kbd>S</kbd> guarda; ${modo == 'completo' ? '«Enviar a Menorca3D» lo mete en el modelo de la isla' : '«Enviar propuesta» la manda a quien lleva Menorca3D para que la revise'}.</div>`;
     $('notas').onchange = e => { casa.notas = e.target.value; ed.commit('Notas'); };
     return;
   }
@@ -456,10 +487,10 @@ async function accion(a) {
   }
   if (a == 'descartar') {
     if (!guardadas.has(casa.p.ref)) return toast('Esta casa no tiene versión editada guardada.');
-    if (!confirm('Se quita la versión editada (queda una copia en casas/historial) y Menorca3D volverá a usar la de v0.7 la próxima vez que envíes. ¿Seguir?')) return;
-    await fetch('/api/casas/' + casa.p.ref, { method: 'DELETE' }); await refrescarGuardadas(); casa.editada = false;
+    if (!confirm(modo == 'completo' ? 'Se quita la versión editada (queda una copia en casas/historial) y Menorca3D volverá a usar la de v0.7 la próxima vez que envíes. ¿Seguir?' : 'Se borra tu versión editada de esta casa y vuelve a la de v0.7. ¿Seguir?')) return;
+    await api.borrarCasa(casa.p.ref); await refrescarGuardadas(); casa.editada = false;
     ed.cargar(generarCasa(casa.Z, casa.p.ref, D.ajustes), 'Descartada la versión editada'); pintarCabecera();
-    toast('Versión editada descartada. Pulsa «Enviar a Menorca3D» para quitarla también del modelo de la isla.', 6000);
+    toast(modo == 'completo' ? 'Versión editada descartada. Pulsa «Enviar a Menorca3D» para quitarla también del modelo de la isla.' : 'Versión editada descartada.', 6000);
   }
 }
 

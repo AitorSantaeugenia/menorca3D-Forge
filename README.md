@@ -4,16 +4,16 @@ Editor para retocar a mano, una a una, las casas de Menorca3D y devolverlas al m
 
 Buscas una casa por **número de edificio** (el del mapa de edificios del visor) o por **referencia catastral**. Forge la genera con el mismo código de v0.7 que usa el visor, la muestra en 3D con su terreno, la ortofoto y las casas vecinas, y te deja modificarla. Al pulsar **«Enviar a Menorca3D»**, esa casa sustituye a la generada en los modelos del visor Cesium.
 
-## Dos formas de usarlo
-| | **Modo completo** (quien lleva Menorca3D) | **Modo colaborador** (`MenorcaForge.exe`) |
-|---|---|---|
-| Qué necesita | Esta carpeta junto a `menorca3d_v2` y Node.js | Nada: descomprimir `MenorcaForge.zip` y doble clic en el .exe |
-| Datos | Los de `menorca3d_v2`, sin copiarlos | Una copia de solo lectura dentro de `recursos/` (unos 17 MB) |
-| Dónde guarda | `menorca3d_v2\casas\<REF>.forge.json` | `mis_casas\` junto al .exe |
-| Botón principal | **Enviar a Menorca3D**: regenera los modelos del visor | **Enviar propuesta**: guarda y descarga `propuesta_n<nº>_<REF>_<fecha>.forge.json` para enviarlo |
-| Propuestas | «⋯ → Importar propuesta», o arrastrar el archivo a la ventana | — |
+## Tres formas de usarlo
+| | **Modo completo** (quien lleva Menorca3D) | **Modo colaborador** (`MenorcaForge.exe`) | **Versión web** (GitHub Pages) |
+|---|---|---|---|
+| Qué necesita | Esta carpeta junto a `menorca3d_v2` y Node.js | Nada: descomprimir `MenorcaForge.zip` y doble clic en el .exe | Un navegador y el código de acceso |
+| Datos | Los de `menorca3d_v2`, sin copiarlos | Una copia de solo lectura dentro de `recursos/` (unos 17 MB) | Una copia publicada junto a la web (unos 17 MB, se descargan al entrar) |
+| Dónde guarda | `menorca3d_v2\casas\<REF>.forge.json` | `mis_casas\` junto al .exe | En ese navegador (IndexedDB). Si se borran los datos del navegador, se pierden |
+| Botón principal | **Enviar a Menorca3D**: regenera los modelos del visor | **Enviar propuesta**: guarda y descarga `propuesta_n<nº>_<REF>_<fecha>.forge.json` para enviarlo | **Enviar propuesta**, igual que el .exe |
+| Propuestas | «⋯ → Importar propuesta», o arrastrar el archivo a la ventana | — | — |
 
-Forge detecta el modo solo: si encuentra `menorca3d_v2` con su `pipeline/`, usa el modo completo.
+Forge detecta el modo solo: si encuentra `menorca3d_v2` con su `pipeline/`, usa el modo completo; si no hay servidor (la web publicada), usa la versión web.
 
 ### Arrancar en modo completo
 1. Doble clic en **`iniciar.bat`**.
@@ -37,9 +37,26 @@ Resultado:
 
 Opciones: `--sin-exe` deja solo la carpeta (se arranca con `node servidor.cjs`), y `--sin-zip` no crea el zip.
 
-También lo puede crear GitHub: el *workflow* `construir-exe.yml` (está en `flujos_github/`; muévelo a `.github/workflows/` antes de subir) lo genera en un servidor Windows y deja el zip para descargar en la pestaña «Actions». Para que funcione, define la variable `REPO_V2` del repositorio con el repositorio de menorca3d_v2 (por ejemplo `usuario/menorca3d_v2`).
+También lo puede crear GitHub: el *workflow* `.github/workflows/construir-exe.yml` lo genera en un servidor Windows y deja el zip para descargar en la pestaña «Actions» (y, al crear una versión con etiqueta `v…`, adjunto a la versión). Para que funcione, define la variable `REPO_V2` del repositorio con el repositorio de menorca3d_v2 (por ejemplo `usuario/menorca3d_v2`).
 
 **El primer arranque en Windows:** el .exe no va firmado, así que Windows muestra «Windows protegió su PC». Hay que pulsar «Más información → Ejecutar de todas formas».
+
+### Versión web (GitHub Pages, con código de acceso)
+La misma app, publicada como página estática: no hay servidor, así que las casas se guardan en el navegador de cada colaborador y se envían como propuesta con el formulario.
+
+**Publicarla (una vez):**
+1. Mueve `flujos_github/publicar-web.yml` a `.github/workflows/` y súbelo.
+2. En el repositorio de Forge, **Settings → Pages → Source: «GitHub Actions»**.
+3. En **Settings → Secrets and variables → Actions**:
+   - Variables: `REPO_V2` (por ejemplo `usuario/menorca3d_v2`) y `FORMULARIO_URL` (el enlace rellenado previamente). Son las mismas que usa el .exe.
+   - Secrets: **`FORGE_CODIGO`**, el código que darás a los colaboradores.
+4. Se publica sola en cada push a `main`, o a mano: **Actions → «Publicar web» → Run workflow**. Queda en `https://<usuario>.github.io/<repositorio>/`.
+
+**Para cambiar el código:** cambia el secret `FORGE_CODIGO` y vuelve a lanzar «Publicar web». Quien ya había entrado tendrá que escribir el nuevo.
+
+**Sobre el código de acceso:** la web pública solo guarda el SHA-256 del código (`config.json`), nunca el código. Frena a quien llegue por casualidad, pero **no es seguridad real**: los archivos de la web se pueden descargar sin el código. No hay nada privado en ellos (son los mismos datos públicos que el visor) y lo único que se puede hacer es enviar propuestas, que revisas tú.
+
+**Probarla en tu PC:** `node empaquetar/empaquetar.mjs --web --codigo prueba` crea `dist\web\`. Sírvela con cualquier servidor estático (por ejemplo `npx serve dist/web`); abierta con doble clic no funciona, porque el navegador bloquea los módulos en `file://`.
 
 ### Propuestas (colaborar sin GitHub)
 1. **El colaborador** edita la casa y pulsa **Enviar propuesta**. Escribe su nombre y qué ha cambiado, y se descarga el archivo `propuesta_….forge.json`.
@@ -144,8 +161,10 @@ Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = su
 | `forge.config.ejemplo.json` | Plantilla de `forge.config.json`, con el enlace del formulario de envío |
 | `servidor.cjs` | Servidor local y API: `/api/casas`, `/api/publicar` y `/api/estado` (modo) |
 | `servidor.mjs` | Se mantiene por compatibilidad; carga `servidor.cjs` |
-| `empaquetar/empaquetar.mjs` | Crea `MenorcaForge.exe` y el zip para colaboradores |
-| `flujos_github/construir-exe.yml` | Crea el zip del .exe en GitHub Actions. **Muévelo a `.github/workflows/` antes de subir** |
+| `empaquetar/empaquetar.mjs` | Crea `MenorcaForge.exe` y el zip para colaboradores; con `--web`, la versión web en `dist\web\` |
+| `.github/workflows/construir-exe.yml` | Crea el zip del .exe en GitHub Actions |
+| `flujos_github/publicar-web.yml` | Publica la versión web en GitHub Pages. **Muévelo a `.github/workflows/` antes de subir** |
+| `app/api.js` | Guardar y leer casas: con el servidor (`/api/…`) o, en la versión web, en el navegador (IndexedDB) |
 | `app/datos.js` | Zonas de v0.7, parcelas, números de edificio (como `cesium/js/maps.js`) y búsqueda |
 | `app/casa.js` | Generar con v0.7 → piezas editables, huecos de fachada, UV, agrupar y separar, y formato `.forge.json` |
 | `app/editor.js` | Vista 3D, selección, gizmo, vértices, cámara con teclado, deshacer y contexto (terreno, ortofoto, vecinos) |

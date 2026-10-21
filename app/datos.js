@@ -1,8 +1,8 @@
 // Datos de la isla (solo lectura, de menorca3d_v2): zonas de v0.7 con relieve, edificios por referencia catastral,
 // números de edificio (los mismos que el mapa del visor Cesium) y ajustes manuales.
-import { ring, pip } from '/v07/core/geo.js';
+import { ring, pip } from '../v07/core/geo.js';
 
-const getJSON = f => fetch('/datos/' + f).then(r => (r.ok ? r.json() : null)).catch(() => null);
+const getJSON = f => fetch(new URL('../datos/' + f, import.meta.url)).then(r => (r.ok ? r.json() : null)).catch(() => null);
 const loadScript = src => new Promise(ok => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ok; document.head.appendChild(s); });
 
 // Prepara una zona igual que pipeline/exportar_glb.mjs (y v0.7/src/data/loader.js): relieve, tierra y Cales Fonts.
@@ -26,7 +26,7 @@ function prepZona(D, nombre) {
 export async function cargarDatos() {
   const [zona, municipio, edif, ajus] = await Promise.all(['zona.json', 'municipio.json', 'edificios.json', 'ajustes.json'].map(getJSON));
   if (!zona) throw new Error('No se pudo leer la zona de v0.7 (zone.json). ¿Está bien la ruta de menorca3d_v2?');
-  await loadScript('/datos/es-castell.js');   // window.MENORCA_DATA: todas las piezas del Catastro (para los números)
+  await loadScript(new URL('../datos/es-castell.js', import.meta.url).href);   // window.MENORCA_DATA: todas las piezas del Catastro (para los números)
   const zonas = [prepZona(zona, 'zona'), prepZona(municipio, 'municipio')].filter(Boolean);
   const origin = zona.origin, KX = 111320 * Math.cos(origin.lat * Math.PI / 180), KZ = 110540;
 
