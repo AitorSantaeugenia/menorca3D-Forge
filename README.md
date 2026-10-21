@@ -2,12 +2,42 @@
 
 Editor para retocar a mano, una a una, las casas de Menorca3D y devolverlas al modelo de la isla (`menorca3d_v2`).
 
+- Con contraseña
+![Forge online pidiendo el código de acceso](https://github.com/user-attachments/assets/4a2ce4b5-fd1c-4a64-933c-65e96a0ebb9a)
+
+- Sin contraseña
+![Forge online después de entrar](https://github.com/user-attachments/assets/4f55f2d1-ecb6-45e6-9d3d-96e1894746cf)
+
+**Repositorio:** https://github.com/AitorSantaeugenia/menorca3D-Forge
+**Forge online (modo colaborador):** https://aitorsantaeugenia.github.io/menorca3D-Forge/app/
+
 > [!IMPORTANT]
 > Forge va ligado a **Menorca3D**, el modelo 3D de la isla: repositorio **[AitorSantaeugenia/menorca3D](https://github.com/AitorSantaeugenia/menorca3D)** · [ver Menorca3D online](https://aitorsantaeugenia.github.io/menorca3D/cesium/)
 > - **Probar Forge online** (pide código de acceso): https://aitorsantaeugenia.github.io/menorca3D-Forge/app/
 > - **Descargar para Windows:** [MenorcaForge.zip](https://github.com/AitorSantaeugenia/menorca3D-Forge/releases/latest/download/MenorcaForge.zip) (todas las versiones en [Releases](https://github.com/AitorSantaeugenia/menorca3D-Forge/releases))
 
 Buscas una casa por **número de edificio** (el del mapa de edificios del visor) o por **referencia catastral**. Forge la genera con el mismo código de v0.7 que usa el visor, la muestra en 3D con su terreno, la ortofoto y las casas vecinas, y te deja modificarla. Al pulsar **«Enviar a Menorca3D»**, esa casa sustituye a la generada en los modelos del visor Cesium.
+
+## Demostración
+### 1 · Elegir el edificio
+Busca el edificio por número o referencia catastral, o haz clic en el mapa. Las casas que ya has editado aparecen en la lista.
+
+![Selección del edificio a modificar](https://github.com/user-attachments/assets/45ebc922-e49c-4a3e-b88f-25c644e09dae)
+
+### 2 · Editarlo en 3D
+La casa sale generada por v0.7 con su terreno y sus vecinas. Puedes mover, girar y escalar cada pieza, cambiar materiales y añadir piezas ya preparadas: tejados, ventanas, persianas, balcones, vallas, árboles…
+
+![Editor del edificio en 3D con las piezas preparadas](https://github.com/user-attachments/assets/2b504341-134c-4649-9a82-7bce192b5ca2)
+
+### 3 · Guardar y descargar la propuesta
+«Enviar propuesta» guarda la casa y descarga un archivo `.forge.json` con tus cambios.
+
+![Guardar y descargar el archivo con los cambios](https://github.com/user-attachments/assets/711a47d4-865e-4ff3-adaf-2565d9fb9f69)
+
+### 4 · Enviar el formulario
+El formulario de Google se abre ya relleno con tu nombre, el edificio y el comentario: solo hay que adjuntar el `.forge.json` y enviar.
+
+![Formulario de envío con el archivo adjunto](https://github.com/user-attachments/assets/f9dcbf31-3073-4ed2-aed3-82b3fdc337b4)
 
 ## Tres formas de usarlo
 | | **Modo completo** (quien lleva Menorca3D) | **Modo colaborador** (`MenorcaForge.exe`) | **Versión web** (GitHub Pages) |
