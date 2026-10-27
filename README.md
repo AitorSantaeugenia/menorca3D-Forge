@@ -149,6 +149,17 @@ Las propuestas llegan por un formulario de Google con subida de archivo. Queda r
 
 Las paredes con material «Fachada de v0.7» **recalculan sus huecos** al cambiar de tamaño: una pared más larga tiene más vanos, y las plantas se siguen contando desde el arranque del muro.
 
+### 📷 Calcar desde foto
+Recrea una pared a partir de una foto tuya de la fachada. Elige la pared (mejor con un clic en la cara que quieres calcar) y pulsa **«📷 Calcar desde foto»** en el panel derecho.
+1. **Esquinas:** abre la foto (o arrástrala) y lleva los 4 puntos a las esquinas de la pared. Una lupa ayuda a afinar. Forge endereza la foto a la medida real de la pared, que conoce por el Catastro.
+2. **Calcar:** elige un tipo y dibuja un recuadro sobre cada hueco: ventana, ventana con persianas abiertas, persiana cerrada, puerta, portón de garaje o balcón. El color de cada uno se toma de la foto y se puede cambiar. Clic en un recuadro para elegirlo y moverlo; **Supr** lo borra.
+3. **Aplicar:** Forge coloca sus propias piezas en la pared, a escala, como si las hubieras añadido a mano: se pueden mover, retocar o borrar, y **Ctrl+Z** lo deshace todo de una vez. Opciones de la pared:
+   - **Quitar las ventanas automáticas de v0.7** (en paredes con «Fachada de v0.7»), para que no se dupliquen;
+   - **Pintarla del color de la foto** (la mediana de la pared);
+   - **Usar la foto como textura.** La foto enderezada (máx. 1024 px, JPEG) se guarda en el `.forge.json` y el exportador la escribe como `cesium/assets/textures/foto_<id>.jpg`. **Se publica en el modelo**: comprueba que no salgan personas, matrículas ni nada privado.
+
+Sin la opción de textura, la foto **no sale del navegador**: solo sirve de guía. Usa fotos propias; las de Google Street View no se pueden usar.
+
 ## Tecnologías
 - **Three.js 0.169**, la misma versión que v0.7, sin bundler. El navegador carga los módulos ES con un *import map*.
 - **El código de v0.7 se usa tal cual, sin copiarlo.** El servidor sirve `menorca3d_v2/v0.7/src`, así que `createBuildings`, el shader de fachadas y las texturas son exactamente los del visor. Si mejoras v0.7, Forge lo ve al momento.
@@ -172,10 +183,12 @@ Más detalles:
 Un JSON por casa con estos campos:
 - **Cabecera:** `formato: "menorca3d-forge"`, `version`, `ref`, `n`, `zona` (`zona` o `municipio`) y `origin` (lon/lat del origen de v0.7).
 - **`objetos`:** cada pieza lleva
-  - `nombre` y `material` (`kind`: `fachada`, el nombre de una textura de v0.7 o `color`; `doble`; `emissive`);
+  - `nombre` y `material` (`kind`: `fachada`, el nombre de una textura de v0.7, `color` o `foto` con su `foto: <id>`; `doble`; `emissive`);
   - `fachada` (`estilo`, `semilla` y `base`);
   - `transform` (`p`, `q`, `s`);
   - `geo`, con los arrays `position`, `normal`, `uv` (en metros), `color`, `aWall` y `aFac`.
+
+- **`fotos`** (solo si alguna pieza usa una foto como textura): `{ "<id>": "data:image/jpeg;base64,…" }`. En esas piezas, `uv` va de 0 a 1 sobre el rectángulo de la pared.
 
 Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = sur).
 
@@ -184,6 +197,9 @@ Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = su
 - **Carrer Fontanilles:** un mismo generador de v0.7 dibuja los detalles de las casas nº 35, 59 y 84 (galerías, franjas, farmacia). Si editas una, edita también las otras dos, porque el generador sigue dibujando esos detalles mientras alguna quede sin editar.
 - **Luces de noche:** las luces especiales (focos del campo de fútbol, cruces de farmacia) salen de los generadores. En una casa editada se pierden; usa «Luz propia» en la pieza.
 - **Ortofoto:** necesita internet. Sin conexión, el terreno se ve liso.
+
+## Pendiente (TODO)
+- **Calcar desde foto con IA (detección automática):** un modelo de visión propondría los recuadros de ventanas, puertas, persianas y balcones, y el colaborador solo los corregiría. Necesita un pequeño servidor intermedio, porque la clave de la API no puede ir en la web pública ni en el .exe, y tiene un coste por foto.
 
 ## Privacidad y licencia
 - **Sin datos privados:** no hay claves, tokens ni datos personales en el código (revisado el 21-10-2026). El nombre que escribe el colaborador al enviar una propuesta solo va dentro del archivo de propuesta.
@@ -205,5 +221,6 @@ Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = su
 | `app/datos.js` | Zonas de v0.7, parcelas, números de edificio (como `cesium/js/maps.js`) y búsqueda |
 | `app/casa.js` | Generar con v0.7 → piezas editables, huecos de fachada, UV, agrupar y separar, y formato `.forge.json` |
 | `app/editor.js` | Vista 3D, selección, gizmo, vértices, cámara con teclado, deshacer y contexto (terreno, ortofoto, vecinos) |
-| `app/primitivas.js` | Catálogo de piezas nuevas, incluidas las vallas |
+| `app/primitivas.js` | Catálogo de piezas nuevas, incluidas las vallas, y huecos a medida para «Calcar desde foto» |
+| `app/foto.js` | «Calcar desde foto»: esquinas, enderezado (homografía), recuadros de huecos y aplicar a la pared |
 | `app/main.js` | Interfaz, propuestas e importación y exportación |

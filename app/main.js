@@ -6,6 +6,7 @@ import { cargarDatos } from './datos.js';
 import { crearEditor } from './editor.js';
 import { generarCasa, piezasDeGrupo, separar, serializar, deserializar, crearPieza, pintar, colorDe, actualizarDerivados, ESTILOS, TEXTURAS, FORMATO } from './casa.js';
 import { PRIMITIVAS, partesDe } from './primitivas.js';
+import { abrirCalco, esPared } from './foto.js';
 import { tex } from '../v07/core/textures.js';
 import * as api from './api.js';
 
@@ -18,7 +19,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const toast = (msg, ms = 3200) => { const t = $('toast'); t.innerHTML = msg; t.classList.add('open'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('open'), ms); };
 const NOMBRE_TEX = { estuco: 'Estuco', teja: 'Teja', terraza: 'Terraza (baldosa)', piedra_seca: 'Piedra seca', aplacado: 'Aplacado de lajas', sillarejo: 'Sillarejo de marés',
   sillar: 'Sillería de marés', acera: 'Acera', asfalto: 'Asfalto', losa_plaza: 'Losa de plaza', baldosa_roja: 'Baldosa roja', adoquin: 'Adoquín',
-  rotulo_farmacia: 'Rótulo farmacia 1', rotulo_farmacia2: 'Rótulo farmacia 2', rotulo_farmacia3: 'Rótulo farmacia 3' };
+  foto: 'Foto de la fachada', rotulo_farmacia: 'Rótulo farmacia 1', rotulo_farmacia2: 'Rótulo farmacia 2', rotulo_farmacia3: 'Rótulo farmacia 3' };
 const nombreKind = k => k == 'fachada' ? 'Fachada de v0.7 (huecos)' : k == 'color' ? 'Color liso' : NOMBRE_TEX[k] || k;
 const swatch = k => k == 'fachada' ? '#d8cdb5' : k == 'color' ? '#7c8794' : k == 'teja' ? '#b0573a' : k == 'terraza' ? '#c9c2b2' : '#8c8170';
 
@@ -313,6 +314,8 @@ function añadirPrimitiva(P) {
 // =====================================================================================================================
 // Propiedades de la selección
 // =====================================================================================================================
+// Normal de la cara de la pieza donde se hizo clic (hacia la cámara), si el último clic fue en ella
+const normalVista = o => (ultimoPunto && ultimoPunto.object === o && ultimoPunto.normal ? ultimoPunto.normal : null);
 const R2 = x => Math.round(x * 100) / 100, deg = r => Math.round(THREE.MathUtils.radToDeg(r) * 10) / 10;
 // Selector de material: fachada de v0.7, color liso y las texturas de v0.7 (miniaturas reales)
 const MATS = [['fachada', 'Fachada'], ['color', 'Color'], ...TEXTURAS.filter(t => !/^rotulo/.test(t)).map(t => [t, NOMBRE_TEX[t] || t]), ...TEXTURAS.filter(t => /^rotulo/.test(t)).map(t => [t, NOMBRE_TEX[t] || t])];
@@ -353,6 +356,7 @@ function pintarProps() {
       <div class="bloque ayuda">${ed.piezas().length} piezas · ${Math.round(tris).toLocaleString('es')} triángulos<br><br>
       <b>Cómo se trabaja</b><br>Clic en una pieza para elegirla (<kbd>Mayús</kbd> para varias). Mueve, gira o escala con el gizmo (<kbd>W</kbd> <kbd>R</kbd> <kbd>S</kbd>). La cámara se mueve con las flechas, <kbd>Q</kbd>/<kbd>E</kbd> para girar y <kbd>+</kbd>/<kbd>−</kbd> para el zoom.
       Doble clic o <kbd>V</kbd>: mover vértices sueltos (subir un alero, estirar una pared). Las paredes con «Fachada de v0.7» redibujan solas ventanas y persianas al cambiar de tamaño.<br><br>
+      <b>📷 Calcar desde foto:</b> elige una pared y pulsa «Calcar desde foto» para recrear sus ventanas, puertas y colores a partir de una foto tuya.<br><br>
       Para añadir algo, haz clic en la superficie donde va y pulsa un botón de «Añadir». <kbd>Ctrl</kbd>+<kbd>S</kbd> guarda; ${modo == 'completo' ? '«Enviar a Menorca3D» lo mete en el modelo de la isla' : '«Enviar propuesta» la manda a quien lleva Menorca3D para que la revise'}.</div>`;
     $('notas').onchange = e => { casa.notas = e.target.value; ed.commit('Notas'); };
     return;
@@ -375,6 +379,7 @@ function pintarProps() {
     + `<div class="row"><label>Dos caras</label><input id="mDoble" type="checkbox"${pz.material.doble !== false ? ' checked' : ''}></div></div>
     <div class="acc">
       ${uno ? '<button id="aVert" title="V o doble clic">◇ Vértices</button>' : '<button id="aUnir" title="Une varias piezas del mismo material en una">Unir</button>'}
+      ${uno && esPared(o, normalVista(o)) ? '<button id="aFoto" title="Recrea esta pared a partir de una foto: ventanas, puertas, persianas y colores">📷 Calcar desde foto</button>' : ''}
       <button id="aSep" title="Divide la pieza en sus partes sueltas (p. ej. una valla en malla y postes)">Separar</button>
       <button id="aIg" title="Elige todas las piezas con este mismo material y color">Elegir iguales</button>
       <button id="aSuelo" title="Baja (o sube) la pieza hasta el terreno">Apoyar en el suelo</button>
@@ -389,6 +394,7 @@ function pintarProps() {
     for (const id of ['rx', 'ry', 'rz']) $(id).onchange = () => ed.cambiar(x => { x.quaternion.setFromEuler(new THREE.Euler(...['rx', 'ry', 'rz'].map(i => THREE.MathUtils.degToRad(num(i))), 'YXZ')); actualizarDerivados(x, false); }, 'Girar');
     for (const id of ['sx', 'sy', 'sz']) $(id).onchange = () => ed.cambiar(x => { x.scale.set(num('sx') || 1, num('sy') || 1, num('sz') || 1); actualizarDerivados(x, true); }, 'Escalar');
     $('aVert').onclick = () => ed.entrarVertices();
+    if ($('aFoto')) $('aFoto').onclick = () => abrirCalco({ ed, mesh: o, normal: normalVista(o), toast });
   } else $('aUnir').onclick = () => { const e = ed.unirPiezas(); if (e) toast(e); };
   document.querySelectorAll('#props .mat').forEach(b => b.onclick = () => aplicarMaterial(b.dataset.k));
   document.querySelectorAll('#props .chip').forEach(b => b.onclick = () => ed.cambiar(x => pintar(x, b.dataset.c), 'Color'));
@@ -409,7 +415,7 @@ function pintarProps() {
   $('aSuelo').onclick = () => ed.cambiar(x => { const b = new THREE.Box3().setFromObject(x), c = b.getCenter(new THREE.Vector3()); x.position.y += ed.alturaSuelo(c.x, c.z) - b.min.y; actualizarDerivados(x, false); }, 'Apoyar en el suelo');
   $('aDup').onclick = () => ed.duplicar();
   $('aOc').onclick = () => { const v = S.every(x => !x.visible); ed.cambiar(x => { x.visible = v; }, v ? 'Mostrar' : 'Ocultar'); pintarLista(); };
-  $('aTex').onclick = () => ed.cambiar(x => { const p = x.userData.pieza; if (p.material.kind == 'fachada') p.fachada.auto = true; else if (p.material.kind != 'color') p.uvAuto = true; actualizarDerivados(x, false); }, 'Recalcular texturas');
+  $('aTex').onclick = () => ed.cambiar(x => { const p = x.userData.pieza; if (p.material.kind == 'fachada') p.fachada.auto = true; else if (p.material.kind != 'color' && p.material.kind != 'foto') p.uvAuto = true; actualizarDerivados(x, false); }, 'Recalcular texturas');
   $('aBorrar').onclick = () => ed.borrar();
 }
 function refrescarNumeros() {   // durante el arrastre del gizmo, solo los números

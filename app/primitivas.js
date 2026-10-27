@@ -130,3 +130,24 @@ export function partesDe(P) {
       fachada: x.fachada ? { ...x.fachada, semilla: Math.floor(Math.random() * 997) * 16 } : { estilo: -1, semilla: 0, auto: false } };
   });
 }
+
+// Huecos a medida para «Calcar desde foto»: w × h en metros, base en y = 0, centrados en x, mirando hacia +z.
+// color: el de la foto (persiana, hoja de la puerta o del portón).
+export const HUECOS = [
+  ['ventana', 'Ventana', '#4dd0ff'], ['ventanaPersianas', 'Ventana con persianas abiertas', '#3fb27f'], ['persiana', 'Persiana cerrada', '#2e9e6a'],
+  ['puerta', 'Puerta', '#e2a33e'], ['porton', 'Portón de garaje', '#d07a3a'], ['balcon', 'Balcón', '#c77dff'],
+];
+export function hueco(tipo, w, h, color) {
+  const pz = (nombre, g) => ({ nombre, material: { kind: 'color', doble: tipo == 'persiana' || tipo == 'ventanaPersianas' }, uvAuto: false, g: completar(g), fachada: { estilo: -1, semilla: 0, auto: false } });
+  w = Math.max(.3, w); h = Math.max(.3, h);
+  if (tipo == 'ventana') return [pz('Ventana', ventana(w, h))];
+  if (tipo == 'persiana') return [pz('Persiana', persiana(w, h, color || '#2e6355'))];
+  if (tipo == 'ventanaPersianas') {
+    const c = color || '#2e6355', hoja = w / 2;
+    return [pz('Ventana', ventana(w, h)), pz('Persianas', unir([persiana(hoja, h, c).translate(-w / 2 - hoja / 2 - .02, 0, .04), persiana(hoja, h, c).translate(w / 2 + hoja / 2 + .02, 0, .04)]))];
+  }
+  if (tipo == 'puerta') return [pz('Puerta', puerta(w, h, color || '#5a3d2b'))];
+  if (tipo == 'porton') return [pz('Portón', puerta(w, h, color || '#e8e6df'))];
+  if (tipo == 'balcon') return [pz('Balcón', unir([conColor(caja(w, .15, .9, 0, 0, .45), '#ece9e2'), conColor(barandilla(w, Math.min(1.1, Math.max(.8, h))).translate(0, .15, .88), '#2b2b2b')]))];
+  return [];
+}

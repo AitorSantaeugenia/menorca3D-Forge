@@ -14,12 +14,18 @@ export const ESTILOS = [   // estilos de fachada de v0.7 (facadeMaterial.js)
 const ATTRS = { position: 3, normal: 3, uv: 2, color: 3, aWall: 4, aFac: 4 };
 
 // ---------- Materiales (compartidos) ----------
+// Fotos de fachada («Calcar desde foto» → «Usar la foto como textura»): id → imagen JPEG en data URL.
+// Van en el .forge.json, en «fotos», y el exportador de menorca3d_v2 las escribe como textura.
+export const FOTOS = new Map();
 const mats = new Map();
 export function material(spec) {
-  const side = spec.doble === false ? THREE.FrontSide : THREE.DoubleSide, k = JSON.stringify([spec.kind, side, spec.emissive || '']);
+  const side = spec.doble === false ? THREE.FrontSide : THREE.DoubleSide, k = JSON.stringify([spec.kind, side, spec.emissive || '', spec.foto || '']);
   if (!mats.has(k)) {
     let m;
-    if (spec.kind == 'fachada') m = createFacadeMaterial();
+    if (spec.kind == 'foto') {
+      const t = new THREE.TextureLoader().load(FOTOS.get(spec.foto) || ''); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+      m = new THREE.MeshLambertMaterial({ map: t, color: 0xffffff, vertexColors: true, side }); m.userData.foto = spec.foto;
+    } else if (spec.kind == 'fachada') m = createFacadeMaterial();
     else if (TEXTURES[spec.kind]) m = texturedMaterial(spec.kind, { vertexColors: true, side });
     else m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side, ...(spec.emissive ? { emissive: new THREE.Color(spec.emissive) } : {}) });
     m.side = side; mats.set(k, m);
@@ -267,7 +273,7 @@ export function recalcularUV(mesh) {
 export function actualizarDerivados(mesh, cambioForma = true) {
   const pz = mesh.userData.pieza;
   if (cambioForma) { mesh.geometry.computeVertexNormals(); mesh.geometry.computeBoundingBox(); mesh.geometry.computeBoundingSphere();
-    if (pz.material.kind == 'fachada') pz.fachada.auto = true; else if (pz.material.kind != 'color') pz.uvAuto = true; }
+    if (pz.material.kind == 'fachada') pz.fachada.auto = true; else if (pz.material.kind != 'color' && pz.material.kind != 'foto') pz.uvAuto = true; }
   if (pz.material.kind == 'fachada' && pz.fachada.auto) recalcularFachada(mesh);
   else if (pz.uvAuto) recalcularUV(mesh);
 }
@@ -285,6 +291,7 @@ export function colorDe(mesh) {   // color más frecuente de la pieza (para el s
 // ---------- Archivo .forge.json ----------
 const R = (a, d) => Array.from(a, x => Math.round(x * d) / d);
 export function serializar(piezas, meta) {
+  const ids = [...new Set(piezas.map(m => m.userData.pieza.material).filter(m => m.kind == 'foto' && FOTOS.has(m.foto)).map(m => m.foto))];
   return {
     formato: FORMATO, version: VERSION, ...meta, actualizado: new Date().toISOString(),
     marco: 'Plano local de v0.7: x = este, y = altura (m, ortométrica), z = sur; origen = origin (lon/lat)',
@@ -295,9 +302,11 @@ export function serializar(piezas, meta) {
         geo: { position: R(A.position.array, 1e4), normal: R(A.normal.array, 1e3), uv: R(A.uv.array, 1e4), color: R(A.color.array, 1e4),
           aWall: R(A.aWall.array, 1e4), aFac: R(A.aFac.array, 1e4) } };
     }),
+    ...(ids.length ? { fotos: Object.fromEntries(ids.map(i => [i, FOTOS.get(i)])) } : {}),
   };
 }
 export function deserializar(F) {
+  if (F.fotos) for (const [i, d] of Object.entries(F.fotos)) FOTOS.set(i, d);
   return F.objetos.map(o => {
     const g = new THREE.BufferGeometry();
     for (const [k, w] of Object.entries(ATTRS)) if (o.geo[k]) g.setAttribute(k, new THREE.Float32BufferAttribute(o.geo[k], w));
