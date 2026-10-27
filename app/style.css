@@ -202,3 +202,7 @@ aside { background: var(--panel); overflow-y: auto; }
 .cl-sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid #0006; }
 .cl-lado .chk { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
 @media (max-width: 760px) { .cl-cuerpo { flex-direction: column; } .cl-lado { width: auto; max-height: 45vh; border-left: 0; border-top: 1px solid var(--line); } }
+.ayuda-mini { color: var(--mut); font-size: 11px; margin-top: 6px; }
+.cl-grupo { font-size: 11px; color: var(--mut); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.cl-modos { grid-template-columns: 1fr; }
+.modal textarea { font: inherit; color: var(--txt); background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 6px; resize: vertical; }

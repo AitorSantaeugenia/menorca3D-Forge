@@ -7,6 +7,8 @@ import { crearEditor } from './editor.js';
 import { generarCasa, piezasDeGrupo, separar, serializar, deserializar, crearPieza, pintar, colorDe, actualizarDerivados, ESTILOS, TEXTURAS, FORMATO } from './casa.js';
 import { PRIMITIVAS, partesDe } from './primitivas.js';
 import { abrirCalco, esPared } from './foto.js';
+import { abrirObjeto } from './objeto.js';
+import { FUENTES, geoTexto } from './letras.js';
 import { tex } from '../v07/core/textures.js';
 import * as api from './api.js';
 
@@ -282,7 +284,36 @@ function pintarLista() {
 function construirCatalogo() {
   const grupos = [...new Set(PRIMITIVAS.map(p => p.grupo))];
   $('catalogo').innerHTML = grupos.map(g => `<div class="grp">${g}</div><div class="btns">${PRIMITIVAS.filter(p => p.grupo == g).map(p => `<button data-p="${p.id}">${p.nombre}</button>`).join('')}</div>`).join('');
-  $('catalogo').querySelectorAll('button').forEach(b => b.onclick = () => añadirPrimitiva(PRIMITIVAS.find(p => p.id == b.dataset.p)));
+  $('catalogo').innerHTML += `<div class="grp">Desde foto y letras</div><div class="btns"><button id="addObjFoto" title="Árbol, jarrón, pedestal, escultura… a partir de una foto">📷 Árbol u objeto desde foto…</button>
+    <button id="addLetras" title="Letras en relieve: rótulos, fechas, números">Letras…</button></div>
+    <div class="ayuda-mini">Para calcar una fachada: elige una pared y pulsa «📷 Calcar desde foto».</div>`;
+  $('catalogo').querySelectorAll('button[data-p]').forEach(b => b.onclick = () => añadirPrimitiva(PRIMITIVAS.find(p => p.id == b.dataset.p)));
+  $('addObjFoto').onclick = () => { if (!casa) return toast('Abre primero una casa.'); abrirObjeto({ ed, toast, punto: ultimoPunto }); };
+  $('addLetras').onclick = dialogoLetras;
+}
+// Letras en relieve sueltas: se pegan a la pared donde hiciste clic (o se ponen de pie en el suelo)
+const LS_LETRAS = 'forge-letras';
+function dialogoLetras() {
+  if (!casa) return toast('Abre primero una casa.');
+  let u = {}; try { u = JSON.parse(localStorage.getItem(LS_LETRAS) || '{}'); } catch { /* */ }
+  modal('Letras en relieve', `<div class="form"><label>Texto <textarea id="lTxt" rows="2" placeholder="p. ej. 1933, CAN XEC o el número de la casa">${esc(u.texto || '')}</textarea></label>
+    <label>Letra <select id="lFue">${FUENTES.map(([k, n]) => `<option value="${k}"${k == (u.fuente || 'serif') ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label>Alto de las letras (m) <input id="lAlto" type="number" min=".05" max="5" step=".05" value="${u.alto || .4}"></label>
+    <label>Relieve (cm) <input id="lRel" type="number" min="1" max="50" step="1" value="${u.relieve || 4}"></label>
+    <label>Color <input id="lCol" type="color" value="${u.color || '#f4f1e8'}"></label></div>
+    <p class="cl-nota">Se pega a la pared donde hiciste el último clic, mirando hacia fuera. Varias líneas: pulsa Intro dentro del texto.</p>
+    <div class="pie"><button id="lOk" class="prim">Añadir letras</button></div>`);
+  $('lOk').onclick = async () => {
+    const v = { texto: $('lTxt').value, fuente: $('lFue').value, alto: Math.max(.05, +$('lAlto').value || .4), relieve: Math.max(1, +$('lRel').value || 4), color: $('lCol').value };
+    if (!v.texto.trim()) return $('lTxt').focus();
+    try { localStorage.setItem(LS_LETRAS, JSON.stringify(v)); } catch { /* */ }
+    $('lOk').disabled = true;
+    try {
+      const g = await geoTexto(v.texto, { fuente: v.fuente, alto: v.alto, relieve: v.relieve / 100 });
+      $('modal').classList.remove('open');
+      añadirPrimitiva({ id: 'letras', pegado: true, nombre: `Letras «${v.texto.replace(/\n/g, ' ').slice(0, 20)}»`, material: { kind: 'color', doble: false }, color: v.color, geo: () => g });
+    } catch (err) { console.error(err); toast('No se pudieron crear las letras: ' + esc(err.message), 6000); $('lOk').disabled = false; }
+  };
 }
 // Coloca la pieza nueva donde se hizo el último clic: los huecos (ventanas, puertas…) se pegan a la pared mirando hacia fuera
 function añadirPrimitiva(P) {

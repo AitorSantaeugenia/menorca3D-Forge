@@ -150,15 +150,32 @@ Las propuestas llegan por un formulario de Google con subida de archivo. Queda r
 Las paredes con material «Fachada de v0.7» **recalculan sus huecos** al cambiar de tamaño: una pared más larga tiene más vanos, y las plantas se siguen contando desde el arranque del muro.
 
 ### 📷 Calcar desde foto
-Recrea una pared a partir de una foto tuya de la fachada. Elige la pared (mejor con un clic en la cara que quieres calcar) y pulsa **«📷 Calcar desde foto»** en el panel derecho.
-1. **Esquinas:** abre la foto (o arrástrala) y lleva los 4 puntos a las esquinas de la pared. Una lupa ayuda a afinar. Forge endereza la foto a la medida real de la pared, que conoce por el Catastro.
-2. **Calcar:** elige un tipo y dibuja un recuadro sobre cada hueco: ventana, ventana con persianas abiertas, persiana cerrada, puerta, portón de garaje o balcón. El color de cada uno se toma de la foto y se puede cambiar. Clic en un recuadro para elegirlo y moverlo; **Supr** lo borra.
+Recrea una pared a partir de una foto tuya (o de amigos) de la fachada. Elige la pared (mejor con un clic en la cara que quieres calcar) y pulsa **«📷 Calcar desde foto»** en el panel derecho.
+1. **Esquinas:** abre la foto (o arrástrala) y lleva los 4 puntos a las esquinas de la pared, con una lupa para afinar. Marca el borde de arriba de la pared aunque encima haya un remate: Forge endereza la foto a la medida real de la pared (la conoce por el Catastro) e incluye también **2,5 m por encima**, para calcar remates y pretiles.
+2. **Calcar:** elige qué marcar y arrástralo sobre la foto. El color de cada cosa sale de la foto y se puede cambiar.
+   - **Huecos:** ventana, ventana con persianas abiertas, persiana cerrada, puerta, portón de garaje y balcón. Cada uno puede llevar **recercado** (el marco alrededor), con su ancho y color, **recto o en arco**. «Recercado en todos los huecos» lo pone de una vez.
+   - **Cornisa o moldura:** franja que sobresale de la pared (con su vuelo).
+   - **Zócalo:** franja de abajo, de color o con la textura de sillería, sillarejo, aplacado o piedra seca de v0.7.
+   - **Letras:** un recuadro con el texto (por ejemplo, la fecha de un remate). Las letras ocupan el alto del recuadro, en relieve.
+   - **Silueta:** contorno punto a punto (clic en el primer punto, doble clic o **Intro** para cerrarlo) que se convierte en una pieza con grosor: remates escalonados o curvos, frontones, placas, escudos, relieves.
+   - Clic en una marca para elegirla; elegida, se mueve arrastrándola, y **Supr** la borra. Las letras y los huecos que caen sobre un remate o una cornisa se ponen por delante.
 3. **Aplicar:** Forge coloca sus propias piezas en la pared, a escala, como si las hubieras añadido a mano: se pueden mover, retocar o borrar, y **Ctrl+Z** lo deshace todo de una vez. Opciones de la pared:
    - **Quitar las ventanas automáticas de v0.7** (en paredes con «Fachada de v0.7»), para que no se dupliquen;
-   - **Pintarla del color de la foto** (la mediana de la pared);
-   - **Usar la foto como textura.** La foto enderezada (máx. 1024 px, JPEG) se guarda en el `.forge.json` y el exportador la escribe como `cesium/assets/textures/foto_<id>.jpg`. **Se publica en el modelo**: comprueba que no salgan personas, matrículas ni nada privado.
+   - **Pintarla del color de la foto** (la mediana de la pared, sin contar huecos ni recercados);
+   - **Usar la foto como textura.** La foto enderezada (solo la pared, máx. 1024 px, JPEG) se guarda en el `.forge.json` y el exportador de menorca3d_v2 la escribe como `cesium/assets/textures/foto_<id>.jpg`. **Se publica en el modelo**: comprueba que no salgan personas, matrículas ni nada privado.
 
-Sin la opción de textura, la foto **no sale del navegador**: solo sirve de guía. Usa fotos propias; las de Google Street View no se pueden usar.
+Sin la opción de textura, la foto **no sale del navegador**: solo sirve de guía. Usa fotos propias o de amigos; las de Google Street View no se pueden usar.
+
+### 📷 Árbol u objeto desde foto
+En «Añadir → Desde foto y letras». Haz antes un clic en el suelo donde lo quieres: se coloca allí, mirando a la cámara.
+1. **Recorta** el objeto con un recuadro, del suelo a lo más alto, y escribe su **altura real** (si no la sabes, compárala con una puerta, unos 2,1 m, o una planta de casa, unos 3 m).
+2. **Elige cómo se hace:**
+   - **Árbol:** pino, olivo o acebuche, palmera, ciprés o genérico. El alto, el ancho de la copa y los colores de copa y tronco salen de la foto, y se pueden cambiar.
+   - **De torno (redondo):** marca medio contorno, el lado derecho, de abajo arriba; Forge lo hace girar alrededor del eje. Para jarrones, macetas, pedestales, columnas, bolardos o fuentes.
+   - **Silueta con grosor:** el contorno entero, con el grosor que digas. Para esculturas o figuras vistas de frente; de lado es una plancha.
+
+### Letras
+«Añadir → Letras…»: texto (una o varias líneas), letra clásica (con remates) o moderna (de palo), alto, relieve y color. Se pegan a la pared donde hiciste el último clic, mirando hacia fuera. Usan las tipografías Droid Serif y Droid Sans (Apache 2.0, en `app/fuentes/`), que tienen todas las letras del castellano y el catalán.
 
 ## Tecnologías
 - **Three.js 0.169**, la misma versión que v0.7, sin bundler. El navegador carga los módulos ES con un *import map*.
@@ -203,7 +220,7 @@ Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = su
 
 ## Privacidad y licencia
 - **Sin datos privados:** no hay claves, tokens ni datos personales en el código (revisado el 21-10-2026). El nombre que escribe el colaborador al enviar una propuesta solo va dentro del archivo de propuesta.
-- **Licencia:** el código es MIT (`LICENSE`). three.js es MIT. Los datos que lleva el .exe son de Catastro, IGN, IDE Menorca y OpenStreetMap, con sus atribuciones en `menorca3d_v2/ATRIBUCIONES.md`, que se incluye en `recursos/`.
+- **Licencia:** el código es MIT (`LICENSE`). three.js es MIT. Las tipografías de las letras (Droid Serif y Droid Sans) son Apache 2.0 (`app/fuentes/LICENCIA-Droid.txt`). Los datos que lleva el .exe son de Catastro, IGN, IDE Menorca y OpenStreetMap, con sus atribuciones en `menorca3d_v2/ATRIBUCIONES.md`, que se incluye en `recursos/`.
 - **Qué no se sube al repositorio** (`.gitignore`): `node_modules/`, `dist/`, `casas/` (las casas van al repositorio de menorca3d_v2), `mis_casas/`, `integracion/` y `forge.config.json`.
 - **Datos del colaborador:** su nombre y su correo (verificado por Google) llegan a tus respuestas del formulario. No se publican en ningún repositorio; en la casa aceptada solo queda la nota «Propuesta de <nombre>». Si prefieres que no quede ni eso, bórrala de las notas antes de guardar.
 
@@ -222,5 +239,8 @@ Marco: plano local de v0.7, en metros (x = este, y = altura ortométrica, z = su
 | `app/casa.js` | Generar con v0.7 → piezas editables, huecos de fachada, UV, agrupar y separar, y formato `.forge.json` |
 | `app/editor.js` | Vista 3D, selección, gizmo, vértices, cámara con teclado, deshacer y contexto (terreno, ortofoto, vecinos) |
 | `app/primitivas.js` | Catálogo de piezas nuevas, incluidas las vallas, y huecos a medida para «Calcar desde foto» |
-| `app/foto.js` | «Calcar desde foto»: esquinas, enderezado (homografía), recuadros de huecos y aplicar a la pared |
+| `app/foto.js` | «Calcar desde foto»: esquinas, enderezado (homografía), marcas (huecos, recercados, cornisa, zócalo, letras, siluetas) y aplicar a la pared |
+| `app/objeto.js` | «Árbol u objeto desde foto»: recorte, árbol por especie, objeto de torno y silueta con grosor |
+| `app/letras.js` | Letras en relieve (three.js `TextGeometry`) |
+| `app/fuentes/` | Tipografías Droid Serif y Droid Sans Bold (Apache 2.0) |
 | `app/main.js` | Interfaz, propuestas e importación y exportación |

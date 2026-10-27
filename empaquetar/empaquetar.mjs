@@ -32,7 +32,7 @@ if (!THREE) fail('Falta three.js: ejecuta  npm install  en la carpeta de Forge.'
 function copiarThree(dst) {
   copy(path.join(THREE, 'build/three.module.js'), path.join(dst, 'build/three.module.js'));
   for (const f of ['LICENSE', 'package.json']) copy(path.join(THREE, f), path.join(dst, f));
-  const pend = ['controls/OrbitControls.js', 'controls/TransformControls.js', 'exporters/GLTFExporter.js', 'loaders/GLTFLoader.js'], hechos = new Set();
+  const pend = ['controls/OrbitControls.js', 'controls/TransformControls.js', 'exporters/GLTFExporter.js', 'loaders/GLTFLoader.js', 'loaders/FontLoader.js', 'geometries/TextGeometry.js'], hechos = new Set();
   while (pend.length) {
     const rel = pend.pop(); if (hechos.has(rel)) continue; hechos.add(rel);
     const src = path.join(THREE, 'examples/jsm', rel); copy(src, path.join(dst, 'examples/jsm', rel));

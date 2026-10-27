@@ -151,3 +151,48 @@ export function hueco(tipo, w, h, color) {
   if (tipo == 'balcon') return [pz('Balcón', unir([conColor(caja(w, .15, .9, 0, 0, .45), '#ece9e2'), conColor(barandilla(w, Math.min(1.1, Math.max(.8, h))).translate(0, .15, .88), '#2b2b2b')]))];
   return [];
 }
+
+// Árboles a medida («Árbol u objeto desde foto»): alto total H, ancho de copa C (m), colores de copa y tronco.
+export const ESPECIES = [['generico', 'Árbol (genérico)'], ['pino', 'Pino'], ['olivo', 'Olivo / acebuche'], ['palmera', 'Palmera'], ['cipres', 'Ciprés']];
+export function arbol(especie, H = 5, C = 4, copa = '#4f7a3a', tronco = '#6b5038') {
+  H = Math.max(.8, H); C = Math.max(.4, C);
+  const L = [], esfera = (r, x, y, z, sy = 1, det = 1) => new THREE.IcosahedronGeometry(r, det).scale(1, sy, 1).translate(x, y, z);
+  if (especie == 'palmera') {
+    const ht = H * .85; L.push([new THREE.CylinderGeometry(H * .018 + .08, H * .025 + .12, ht, 8, 4).translate(0, ht / 2, 0), tronco]);
+    for (let i = 0; i < 12; i++) {   // hojas: láminas inclinadas que cuelgan
+      const a = i / 12 * Math.PI * 2, len = C / 2;
+      const g = new THREE.PlaneGeometry(len, len * .22).translate(len / 2, 0, 0).rotateZ(-.35 - (i % 2) * .3).rotateY(a).translate(0, ht, 0);
+      L.push([g, copa]);
+    }
+    L.push([esfera(.35 + H * .02, 0, ht, 0, 1.2, 0), copa]);
+  } else if (especie == 'cipres') {
+    const ht = H * .12; L.push([new THREE.CylinderGeometry(.06 + H * .008, .09 + H * .01, ht + .2, 6).translate(0, (ht + .2) / 2, 0), tronco]);
+    L.push([esfera(C / 2, 0, ht + (H - ht) / 2, 0, (H - ht) / C, 1), copa]);
+  } else if (especie == 'pino') {   // pino piñonero: tronco alto y copa ancha y aplanada
+    const ht = H * .62; L.push([new THREE.CylinderGeometry(.1 + H * .012, .14 + H * .018, ht + .3, 8).translate(0, (ht + .3) / 2, 0), tronco]);
+    const hc = Math.max(.6, H - ht); L.push([esfera(C / 2, 0, ht + hc / 2, 0, hc / C, 2), copa]);
+    L.push([esfera(C * .3, C * .18, ht + hc * .55, C * .1, hc / (C * .6), 1), copa]);
+  } else if (especie == 'olivo') {   // tronco corto y retorcido, copa irregular
+    const ht = H * .32; L.push([new THREE.CylinderGeometry(.12 + H * .02, .22 + H * .03, ht + .3, 7).rotateZ(.12).translate(.05, (ht + .3) / 2, 0), tronco]);
+    const hc = H - ht, r = C / 2;
+    L.push([esfera(r * .75, 0, ht + hc * .5, 0, hc / C * 1.2, 1), copa], [esfera(r * .55, r * .45, ht + hc * .42, r * .2, 1, 1), copa],
+      [esfera(r * .55, -r * .45, ht + hc * .48, -r * .15, 1, 1), copa], [esfera(r * .45, 0, ht + hc * .7, r * .3, 1, 1), copa]);
+  } else {
+    const ht = H * .4; L.push([new THREE.CylinderGeometry(.08 + H * .012, .12 + H * .016, ht + .3, 8).translate(0, (ht + .3) / 2, 0), tronco]);
+    const hc = H - ht; L.push([esfera(C / 2, 0, ht + hc / 2, 0, hc / C, 1), copa]);
+  }
+  return varias(L);
+}
+// Objeto «de torno» (jarrón, pedestal, columna, fuente…): perfil [[radio, altura], …] en metros, de abajo arriba
+export function torno(perfil, color = '#ece9e2') {
+  const P = perfil.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y));
+  if (P[0].x > 0) P.unshift(new THREE.Vector2(0, P[0].y));
+  if (P[P.length - 1].x > 0) P.push(new THREE.Vector2(0, P[P.length - 1].y));
+  return conColor(new THREE.LatheGeometry(P, 28), color);
+}
+// Silueta con grosor: puntos [[x, y], …] en metros (y hacia arriba), extruida de z = 0 a z = grosor
+export function silueta(puntos, grosor = .25, color = '#ece9e2') {
+  const s = new THREE.Shape(puntos.map(([x, y]) => new THREE.Vector2(x, y)));
+  return conColor(new THREE.ExtrudeGeometry(s, { depth: grosor, bevelEnabled: false, curveSegments: 4 }), color);
+}
+export { conColor, caja, unir as unirGeo };
